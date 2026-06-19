@@ -149,6 +149,15 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      <a
+        className="gh-corner"
+        href="https://github.com/bluemagma-compliance/nohumansshop"
+        target="_blank"
+        rel="noreferrer"
+      >
+        {"</>"} source
+      </a>
     </main>
   );
 }
