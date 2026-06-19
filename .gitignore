@@ -1,0 +1,33 @@
+# Secrets / credentials — NEVER commit (repo is public)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*_rsa
+*.p12
+secrets.*
+**/credentials*.json
+.vercel
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js / build
+.next/
+out/
+build/
+dist/
+
+# Logs / OS / editor
+*.log
+npm-debug.log*
+.DS_Store
+.idea/
+.vscode/
+
+# Local env caches
+.turbo
+*.tsbuildinfo
