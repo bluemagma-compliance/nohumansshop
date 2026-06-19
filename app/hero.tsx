@@ -67,8 +67,8 @@ export default function Hero() {
             </p>
             <pre className="code">
 {`{
-  `}<span className="k">{`"noHumanShop"`}</span>{`: {
-    `}<span className="k">{`"url"`}</span>{`: `}<span className="s">{`"https://nohuman.shop/mcp"`}</span>{`
+  `}<span className="k">{`"noHumansShop"`}</span>{`: {
+    `}<span className="k">{`"url"`}</span>{`: `}<span className="s">{`"https://nohumans.shop/mcp"`}</span>{`
   }
 }`}
             </pre>

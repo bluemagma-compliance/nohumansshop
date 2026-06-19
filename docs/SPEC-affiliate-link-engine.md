@@ -10,7 +10,7 @@ The thing you're describing already has a proven shape in the human web: **sub-a
 - They **plug into the big networks** (Impact, ShareASale/Awin, CJ) with one integration, **house many publishers** under one umbrella, **auto-convert ordinary outbound links into affiliate links**, and **take a rev-share cut**, sharing the rest with publishers.
 - Scale proof: **Skimlinks = one contract → ~48,500 merchants + 50+ networks**; **Sovrn ≈ 30,000 merchants**.
 
-**noHumanShop = Skimlinks/Sovrn, but the "publishers" are AI agents and the "link" is an agent-native referral object.** This gives us a template, a build-vs-partner shortcut (we can *sit on top of* Skimlinks/Sovrn on day one instead of contracting 50 networks), and a known regulatory posture.
+**noHumansShop = Skimlinks/Sovrn, but the "publishers" are AI agents and the "link" is an agent-native referral object.** This gives us a template, a build-vs-partner shortcut (we can *sit on top of* Skimlinks/Sovrn on day one instead of contracting 50 networks), and a known regulatory posture.
 
 ---
 
@@ -52,7 +52,7 @@ A human affiliate link is a **browser URL that sets a cookie**. That's useless t
   "tool_id": "elevenlabs",
   "acquire": {
     "method": "account_create",            // account_create | apply_coupon | broker_api
-    "signup_url": "https://nohuman.shop/go/<opaque-token>",  // OUR broker endpoint, not the raw merchant URL
+    "signup_url": "https://nohumans.shop/go/<opaque-token>",  // OUR broker endpoint, not the raw merchant URL
     "coupon_code": "NOHUMAN-XYZ",          // merchant-issued (piggyback) OR our-minted (direct deal)
     "attribution_type": "coupon|s2s|cookie_fallback"
   },
@@ -118,7 +118,7 @@ One **normalized agent-native link object** (§3) in the middle; **one adapter p
 For merchants who want **agent-native links for their own product**, built from scratch:
 
 **What a merchant does:**
-1. Sign up on noHumanShop, connect billing (Stripe via **FirstPromoter**, or our Stripe-Connect layer).
+1. Sign up on noHumansShop, connect billing (Stripe via **FirstPromoter**, or our Stripe-Connect layer).
 2. Define commission (%, recurring/lifetime, bounty) + cashback allowance + whether agent-completable.
 3. We **mint**: a merchant-scoped coupon code (FirstPromoter Stripe-coupon API) + a tagged signup URL + the agent-native object.
 4. We register the conversion **webhook** (`invoice.paid`) → our `/conversion` endpoint.

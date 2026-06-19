@@ -31,7 +31,7 @@
 
 ### Flow (text diagram)
 ```
-1. Agent → noHumanShop MCP: "tool for problem X"
+1. Agent → noHumansShop MCP: "tool for problem X"
 2. MCP → ranked tools + verified tutorials + {tagged signup link OR coupon, subid}
 3. Agent/owner creates account through tagged link / applies coupon   ← attribution locked here
 4. (optional) MCP OAuth authorizes the now-attributed account

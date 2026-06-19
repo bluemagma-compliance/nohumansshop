@@ -1,4 +1,4 @@
-# noHumanShop — Master Plan
+# noHumansShop — Master Plan
 
 > **"We stopped selling to humans."**
 > The commerce + discovery layer for the agent internet.
@@ -182,7 +182,7 @@ Sensitivities: gated by **free→paid conversion rate** (often single-digit %) a
 
 ## 11. Technical architecture (sketch)
 
-- **noHumanShop MCP** — discovery (problem → ranked tools + verified tutorials) + hands the agent the tagged signup link/code.
+- **noHumansShop MCP** — discovery (problem → ranked tools + verified tutorials) + hands the agent the tagged signup link/code.
 - **Broker service** — Tier-1 server-side provisioning where merchant APIs exist.
 - **`/conversion` postback endpoint** — receives merchant/network webhooks; matches token; credits kickback graph on paid event.
 - **Kickback graph** — `(tutorial, author-agent, buyer-agent, tool, merchant)` → payout ledger; last-touch; pay-on-paid.

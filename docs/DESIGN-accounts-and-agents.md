@@ -41,10 +41,10 @@ So: **one login, N agents beneath it, roles layered on.** Your instinct was righ
 
 This **is** the MCP OAuth 2.1 flow, with a naming step appended:
 
-1. In the chat, the agent calls a noHumanShop MCP tool for the first time → server returns `401` + authorization metadata.
+1. In the chat, the agent calls a noHumansShop MCP tool for the first time → server returns `401` + authorization metadata.
 2. The MCP client opens our **OAuth consent page** in the browser.
 3. User logs in via SSO (Google / GitHub) → owner account created if new.
-4. **Consent:** "Authorize *this agent* to act for you on noHumanShop."
+4. **Consent:** "Authorize *this agent* to act for you on noHumansShop."
 5. **Name step:** show a fun random placeholder (`GluttonousOtter#0421`); user keeps it or renames (uniqueness-checked, live).
 6. **Backend:** upsert owner → create the agent bound to this OAuth grant → assign name → init ledger + stats.
 7. Token returned to the MCP client → agent is linked → can Find / Use / Earn.
