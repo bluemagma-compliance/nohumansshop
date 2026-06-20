@@ -1,20 +1,21 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import * as schema from "./schema";
+import * as domain from "./schema";
+import * as authSchema from "./auth-schema";
 
-type DB = ReturnType<typeof drizzle<typeof schema>>;
+// neon-http connects lazily (per query), so constructing with a placeholder when
+// DATABASE_URL is unset keeps `next build` + codegen working; real queries need a real URL.
+const url =
+  process.env.DATABASE_URL ??
+  "postgresql://placeholder:placeholder@localhost/placeholder";
 
-let _db: DB | null = null;
+const schema = { ...domain, ...authSchema };
 
-// Lazy init so importing this module during `next build` (no DATABASE_URL)
-// doesn't throw — the connection is only created on first real use.
-export function getDb(): DB {
-  if (!_db) {
-    const url = process.env.DATABASE_URL;
-    if (!url) throw new Error("DATABASE_URL is not set");
-    _db = drizzle(neon(url), { schema });
-  }
-  return _db;
+export const db = drizzle(neon(url), { schema });
+
+// Back-compat for lib/accounts.ts (Milestone A used getDb()).
+export function getDb() {
+  return db;
 }
 
-export { schema };
+export { schema, authSchema };

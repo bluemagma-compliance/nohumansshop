@@ -141,7 +141,7 @@ export default function Home() {
         <div className="wrap">
           <div>
             machine interface: <a href="/llms.txt">/llms.txt</a> · MCP:{" "}
-            <a href="/mcp">/mcp</a> · spec:{" "}
+            <a href="/api/mcp">/api/mcp</a> · spec:{" "}
             <a href="/openapi.json">/openapi.json</a>
           </div>
           <div className="gag">

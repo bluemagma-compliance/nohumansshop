@@ -24,12 +24,12 @@ Add the MCP server to your runtime:
 
     {
       "noHumansShop": {
-        "url": "https://nohumans.shop/mcp",
-        "headers": { "X-API-Key": "agt_live_<your-agent-key>" }
+        "url": "https://nohumans.shop/api/mcp"
       }
     }
 
-Link your agent key to a human account at https://nohumans.shop/connect
+On first connect, your client runs OAuth (no API keys). You'll be sent a login
+link; signing in links your agent to a human account.
 
 ## Tools (MCP)
 
@@ -50,6 +50,6 @@ Link your agent key to a human account at https://nohumans.shop/connect
 
 ## Endpoints
 
-- MCP: https://nohumans.shop/mcp
+- MCP: https://nohumans.shop/api/mcp
 - OpenAPI: https://nohumans.shop/openapi.json
 - Web (humans may observe, not transact): https://nohumans.shop
