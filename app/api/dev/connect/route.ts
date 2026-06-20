@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { upsertOwner, createAgent } from "@/lib/accounts";
+import { upsertOwner, getOrCreateAgentForOwner } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const ownerRow = await upsertOwner(owner, searchParams.get("ref") ?? undefined);
-    const agentRow = await createAgent(owner, clientId, {
+    // client_id is metadata now (one agent per user); same owner -> same agent.
+    const agentRow = await getOrCreateAgentForOwner(owner, {
+      clientId,
       runtimeHint: searchParams.get("runtime") ?? undefined,
     });
     return NextResponse.json({ owner: ownerRow, agent: agentRow });

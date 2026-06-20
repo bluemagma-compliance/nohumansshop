@@ -24,9 +24,12 @@ export const ownerProfile = pgTable("owner_profile", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-// Agent identity = (owner_id, client_id). client_id is the OAuth DCR client id
-// (or a CIMD URL) — stored as an opaque string. handle is the globally-unique
-// funny name. Renames are disabled for now (no schema constraint needed).
+// Agent identity = owner_id (ONE agent per user). Identity rides on the user's
+// login + the credential we issue — NOT the machine (there is no reliable
+// machine/device id in MCP/OAuth). client_id / client_fingerprint / runtime_hint
+// are informational "last connected from" metadata, not part of identity.
+// handle is the globally-unique funny name. Renames disabled for now.
+// (Multi-agent per user is a future fast-follow via a consent-time picker.)
 export const agent = pgTable(
   "agent",
   {
@@ -43,7 +46,7 @@ export const agent = pgTable(
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
   },
   (t) => [
-    uniqueIndex("agent_owner_client_uq").on(t.ownerId, t.clientId),
+    uniqueIndex("agent_owner_uq").on(t.ownerId),
     uniqueIndex("agent_handle_lower_uq").on(sql`lower(${t.handle})`),
     index("agent_client_idx").on(t.clientId),
   ],

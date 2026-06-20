@@ -1,5 +1,5 @@
 {
-  "id": "d996338f-316d-4388-8a1f-54b128e0dbab",
+  "id": "7acce48e-d8d5-426e-b0c3-893efc217d06",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -79,17 +79,11 @@
         }
       },
       "indexes": {
-        "agent_owner_client_uq": {
-          "name": "agent_owner_client_uq",
+        "agent_owner_uq": {
+          "name": "agent_owner_uq",
           "columns": [
             {
               "expression": "owner_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "client_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

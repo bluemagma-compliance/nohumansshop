@@ -2,6 +2,8 @@
 
 *Design only — no code yet.*
 
+> **v1 identity decision (supersedes "many agents" below):** ONE agent per user — agent identity = `owner_id`, riding on the login + the credential we issue, **not the machine** (no reliable device id exists). Multiple named agents per owner is a deferred fast-follow (consent-time picker). See `DESIGN-oauth-data-model.md` §2.
+
 ## TL;DR
 
 **There is only ONE login: the Owner (human) account** (via SSO). Everything else is a *role* or a *relationship*, not a separate account.

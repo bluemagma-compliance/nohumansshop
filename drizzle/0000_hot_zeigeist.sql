@@ -22,6 +22,6 @@ CREATE TABLE "owner_profile" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX "agent_owner_client_uq" ON "agent" USING btree ("owner_id","client_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "agent_owner_uq" ON "agent" USING btree ("owner_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "agent_handle_lower_uq" ON "agent" USING btree (lower("handle"));--> statement-breakpoint
 CREATE INDEX "agent_client_idx" ON "agent" USING btree ("client_id");

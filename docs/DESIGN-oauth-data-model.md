@@ -49,7 +49,7 @@ Keeps *our* fields off the auth lib's table (clean separation; alternatively use
 |---|---|---|
 | `id` | uuid PK | our internal agent id |
 | `owner_id` | text → `user.id` | the human behind it |
-| `client_id` | text | **the OAuth client identifier** (DCR `clientId` *or* a CIMD URL) — stored as an opaque string |
+| `client_id` | text | metadata: the last OAuth client identifier seen (DCR `clientId` / CIMD URL). NOT identity in v1 |
 | `handle` | citext | the **globally-unique** funny name, e.g. `GluttonousOtter#0421` |
 | `display_name` | text? | defaults to handle |
 | `status` | enum | `active \| suspended \| revoked \| pending` |
@@ -59,8 +59,9 @@ Keeps *our* fields off the auth lib's table (clean separation; alternatively use
 | `last_seen_at` | timestamptz? | bumped on each authed call |
 | `revoked_at` | timestamptz? | |
 
-**Constraints:** `UNIQUE(owner_id, client_id)` · `UNIQUE(handle)` · index on `client_id`.
-**Identity rule:** an agent = a `(owner_id, client_id)` pair. New `client_id` → new agent. Reconnect with same `client_id` → same agent.
+**Constraints:** `UNIQUE(owner_id)` · `UNIQUE(lower(handle))` · index on `client_id`.
+**Identity rule (v1): ONE agent per user — an agent = its `owner_id`.** Identity rides on the user's login + the credential we issue, **not the machine** (there is no reliable machine/device id in MCP/OAuth, and the DCR `client_id`'s granularity is client-dependent). So `client_id` / `client_fingerprint` / `runtime_hint` are **informational "last connected from" metadata**, refreshed on each connect — never identity.
+**Fast-follow (multi-agent):** let a user hold several named agents via a consent-time "create new / use existing agent" picker; the schema relaxes to a user-chosen agent. Deferred.
 
 ### `agent_event` (append-only — avoids lost-update races on stats)
 `id`, `agent_id`, `type` (`unblock \| tutorial_published \| conversion \| …`), `ref_id?`, `amount_cents?`, `created_at`. **Immutable.**
@@ -80,17 +81,17 @@ Keeps *our* fields off the auth lib's table (clean separation; alternatively use
 |---|---|---|
 | 1. DCR | Better Auth | `oauthApplication` (new `client_id`) — *no agent yet* |
 | 2. `/authorize` + Google login | Better Auth | `user` (if new) + `account` + `session` + auth code (internal) |
-| 3. Consent + **name agent** (`/connect`) | us + BA | `oauthConsent`; we validate handle, then **create `agent`** = (owner, client_id, handle) + `owner_profile` if missing; activate `referral` if `referred_by` |
+| 3. Consent + **name agent** (`/connect`) | us + BA | `oauthConsent`; we validate handle, then **get-or-create the owner's single `agent`** (handle) + `owner_profile` if missing; record `client_id`/`runtime_hint` as metadata; activate `referral` if `referred_by` |
 | 4. Token issue | Better Auth | `oauthAccessToken` |
-| 5. First authed `/mcp` call | us | resolve token → (user, client_id) → find `agent`; bump `last_seen_at` |
+| 5. First authed `/mcp` call | us | resolve token → user → find the owner's `agent`; bump `last_seen_at` + last-connected metadata |
 | later. earnings/usage | us | `agent_event` (+ recompute `agent_stats`); `earnings_ledger` on conversions |
 
 Agent is created at **step 3 (naming/consent)** — we already have owner (logged in) + `client_id` (authorize param) + chosen name. Abandoned onboarding → only an `oauthApplication` row exists, no orphan agent.
 
 ## 4. Expect-the-unexpected (edge cases → how the schema absorbs them)
 
-1. **Many agents per human** (Claude Code + Codex + reconnects) → `(owner_id, client_id)` composite; new client = new agent. ✅
-2. **Client re-registration churn** (a client that re-DCRs gets a *new* `client_id` → would orphan/duplicate the agent) → `client_fingerprint` lets us *offer to merge* into the existing agent; until then it's a new agent. **Known risk — flagged, not silently handled.**
+1. **Many runtimes per human** (Claude Code + Codex + reconnects) → **v1: all map to the SAME agent** (`UNIQUE(owner_id)`); `client_id` just updates the last-connected metadata. Multiple *named* agents per user = the deferred fast-follow.
+2. **Client re-registration churn** → **not an identity problem in v1** (identity = owner, not client). A re-DCR'd `client_id` simply overwrites the metadata; the agent is unaffected.
 3. **Token expiry / refresh** → Better Auth (`oauthAccessToken` expiries + rotation). We only read; `last_seen_at` tracks liveness.
 4. **Revoke an agent** → `agent.status=revoked` + `revoked_at`; delete/disable its `oauthAccessToken` rows; `verifyToken` rejects revoked agents. ("Disconnect this agent.")
 5. **Account-linking / multiple emails** (same person, Google + later another provider/email → risk of two `user`s = two owners) → rely on Better Auth account-linking by verified email; **flag duplicate-identity** as a manual-merge case.
