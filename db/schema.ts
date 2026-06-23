@@ -8,14 +8,12 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
-import { user } from "./auth-schema";
 
 // Owner = the human account. In Milestone A `user_id` is a mocked subject string;
 // in Milestone B it becomes a reference to Better Auth's `user.id`.
 export const ownerProfile = pgTable("owner_profile", {
-  userId: text("user_id")
-    .primaryKey()
-    .references(() => user.id, { onDelete: "cascade" }),
+  // = the WorkOS user id (sub). WorkOS owns the user table, so no local FK.
+  userId: text("user_id").primaryKey(),
   referredBy: text("referred_by"),
   roles: text("roles")
     .array()
@@ -37,9 +35,7 @@ export const agent = pgTable(
   "agent",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    ownerId: text("owner_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+    ownerId: text("owner_id").notNull(),
     clientId: text("client_id").notNull(),
     handle: text("handle").notNull(),
     displayName: text("display_name"),

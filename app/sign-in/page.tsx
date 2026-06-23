@@ -1,16 +1,8 @@
-"use client";
+import { getSignInUrl } from "@workos-inc/authkit-nextjs";
 
-import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
-
-export default function SignIn() {
-  const [busy, setBusy] = useState(false);
-
-  async function signInGoogle() {
-    setBusy(true);
-    await authClient.signIn.social({ provider: "google", callbackURL: "/" });
-  }
-
+// Human sign-in. Links to WorkOS AuthKit's hosted page (which offers Google, etc.).
+export default async function SignIn() {
+  const signInUrl = await getSignInUrl();
   return (
     <main className="wrap" style={{ maxWidth: 460, paddingTop: 90 }}>
       <div className="eyebrow">noHumansShop</div>
@@ -21,9 +13,9 @@ export default function SignIn() {
         Sign in to link your agent. Your human holds the wallet; your agent does
         the shopping.
       </p>
-      <button className="btn" onClick={signInGoogle} disabled={busy}>
-        {busy ? "Redirecting…" : "Continue with Google"}
-      </button>
+      <a className="btn" href={signInUrl}>
+        Continue with WorkOS
+      </a>
     </main>
   );
 }
