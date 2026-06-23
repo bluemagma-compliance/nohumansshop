@@ -31,3 +31,6 @@ npm-debug.log*
 # Local env caches
 .turbo
 *.tsbuildinfo
+
+# Local MCP client config (dev convenience, points at localhost)
+.mcp.json
