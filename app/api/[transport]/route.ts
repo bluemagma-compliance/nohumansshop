@@ -1,14 +1,17 @@
 import { createMcpHandler } from "mcp-handler";
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
-import { WorkOS } from "@workos-inc/node";
 import { z } from "zod";
 import { upsertOwner, getOrCreateAgentForOwner } from "@/lib/accounts";
 
-// --- token verification (WorkOS is the authorization server; we're the resource server) ---
-const workos = new WorkOS(process.env.WORKOS_API_KEY ?? "");
-const JWKS = createRemoteJWKSet(
-  new URL(workos.userManagement.getJwksUrl(process.env.WORKOS_CLIENT_ID ?? "")),
-);
+// --- token verification (WorkOS AuthKit is the authorization server; we're the resource server) ---
+// MCP tokens are issued by the AuthKit /oauth2 AS, signed by its own JWKS, with
+// issuer = the AuthKit domain. (Lazy so `next build` works without the env set.)
+const AUTHKIT = (process.env.WORKOS_AUTHKIT_DOMAIN ?? "").replace(/\/$/, "");
+let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+function getJwks() {
+  if (!_jwks) _jwks = createRemoteJWKSet(new URL(`${AUTHKIT}/oauth2/jwks`));
+  return _jwks;
+}
 
 const APP = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const RESOURCE = process.env.WORKOS_MCP_RESOURCE ?? `${APP}/api/mcp`;
@@ -32,8 +35,11 @@ async function verify(req: Request): Promise<JWTPayload | null> {
   const m = (req.headers.get("authorization") ?? "").match(/^Bearer\s+(.+)$/i);
   if (!m) return null;
   try {
-    // JWKS proves it's WorkOS-issued; audience binds it to THIS MCP server (RFC 8707).
-    const { payload } = await jwtVerify(m[1], JWKS, { audience: RESOURCE });
+    // JWKS + issuer prove it's AuthKit-issued; audience binds it to THIS MCP server (RFC 8707).
+    const { payload } = await jwtVerify(m[1], getJwks(), {
+      issuer: AUTHKIT,
+      audience: RESOURCE,
+    });
     return payload;
   } catch {
     return null;
