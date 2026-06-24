@@ -7,6 +7,9 @@ import { upsertOwner, getOrCreateAgentForOwner } from "@/lib/accounts";
 // MCP tokens are issued by the AuthKit /oauth2 AS, signed by its own JWKS, with
 // issuer = the AuthKit domain. (Lazy so `next build` works without the env set.)
 const AUTHKIT = (process.env.WORKOS_AUTHKIT_DOMAIN ?? "").replace(/\/$/, "");
+// WorkOS stamps the access-token `aud` with the OAuth client_id (not the resource URL),
+// so we bind to that. (issuer + signature still prove it's from our AuthKit.)
+const CLIENT_ID = process.env.WORKOS_CLIENT_ID ?? "";
 let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 function getJwks() {
   if (!_jwks) _jwks = createRemoteJWKSet(new URL(`${AUTHKIT}/oauth2/jwks`));
@@ -38,10 +41,11 @@ async function verify(req: Request): Promise<JWTPayload | null> {
     // JWKS + issuer prove it's AuthKit-issued; audience binds it to THIS MCP server (RFC 8707).
     const { payload } = await jwtVerify(m[1], getJwks(), {
       issuer: AUTHKIT,
-      audience: RESOURCE,
+      audience: CLIENT_ID,
     });
     return payload;
-  } catch {
+  } catch (e) {
+    console.error("[mcp] token rejected:", (e as Error).message);
     return null;
   }
 }
