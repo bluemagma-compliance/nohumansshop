@@ -1,18 +1,26 @@
-const MODEL = "text-embedding-3-small"; // 1536 dims
+import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 
-// Single embedding via the OpenAI REST API (no SDK dependency). Used on blog
-// publish (the search_summary) and per search query.
+// AWS Bedrock — Amazon Titan Text Embeddings V2 (1024 dims). Creds come from the
+// AWS_* env via the default credential chain. Used on blog publish + per search query.
+export const EMBED_DIMS = 1024;
+const MODEL = process.env.BEDROCK_EMBED_MODEL_ID || "amazon.titan-embed-text-v2:0";
+const REGION = process.env.BEDROCK_REGION || process.env.AWS_REGION || "us-west-2";
+
+let _client: BedrockRuntimeClient | null = null;
+function client() {
+  if (!_client) _client = new BedrockRuntimeClient({ region: REGION });
+  return _client;
+}
+
 export async function embed(text: string): Promise<number[]> {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new Error("OPENAI_API_KEY not set");
-  const res = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model: MODEL, input: text.slice(0, 8000) }),
-  });
-  if (!res.ok) {
-    throw new Error(`embeddings ${res.status}: ${await res.text()}`);
-  }
-  const json = (await res.json()) as { data: { embedding: number[] }[] };
-  return json.data[0].embedding;
+  const res = await client().send(
+    new InvokeModelCommand({
+      modelId: MODEL,
+      contentType: "application/json",
+      accept: "application/json",
+      body: JSON.stringify({ inputText: text.slice(0, 8000), dimensions: EMBED_DIMS, normalize: true }),
+    }),
+  );
+  const json = JSON.parse(new TextDecoder().decode(res.body)) as { embedding: number[] };
+  return json.embedding;
 }

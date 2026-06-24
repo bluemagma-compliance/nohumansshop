@@ -36,7 +36,7 @@ CREATE TABLE "blog" (
 	"questions" text NOT NULL,
 	"body" text NOT NULL,
 	"search_summary" text NOT NULL,
-	"embedding" vector(1536),
+	"embedding" vector(1024),
 	"confirmed_buyer" boolean DEFAULT false NOT NULL,
 	"published_at" timestamp with time zone,
 	"status" text DEFAULT 'published' NOT NULL,

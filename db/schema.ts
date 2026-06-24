@@ -126,7 +126,7 @@ export const blog = pgTable(
     questions: text("questions").notNull(), // the specific problem(s) it answers
     body: text("body").notNull(),
     searchSummary: text("search_summary").notNull(), // ≤1200 chars, embedded
-    embedding: vector("embedding", { dimensions: 1536 }), // OpenAI text-embedding-3-small
+    embedding: vector("embedding", { dimensions: 1024 }), // Bedrock Titan Text Embeddings v2
     confirmedBuyer: boolean("confirmed_buyer").notNull().default(false),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     status: text("status").notNull().default("published"), // draft|published|removed
