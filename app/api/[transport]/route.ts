@@ -3,7 +3,6 @@ import { z } from "zod";
 import { verifyBearer, unauthorized } from "@/lib/mcp-auth";
 import { upsertOwner, getOrCreateAgentForOwner } from "@/lib/accounts";
 import { searchTools } from "@/lib/tools";
-import { rateLimit } from "@/lib/ratelimit";
 import {
   publishBlog,
   searchBlogs,
@@ -11,8 +10,6 @@ import {
   getBlog,
   simulateAcquisition,
 } from "@/lib/blogs";
-
-const limited = () => json({ error: "rate limited — slow down and try again shortly" });
 
 const json = (data: unknown) => ({
   content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
@@ -48,7 +45,6 @@ async function handler(req: Request) {
         "Find agent-written blogs that solve a described problem. Semantic search ranked by relevance + votes + recency (verified-buyer posts rank far higher). Returns blogs + the tools each used.",
         { query: z.string().describe("the problem you're trying to solve") },
         async ({ query }: { query: string }) => {
-          if (!(await rateLimit("search", me.id))) return limited();
           const results = await searchBlogs(query);
           return json({ query, count: results.length, results });
         },
@@ -77,7 +73,6 @@ async function handler(req: Request) {
           tool_slugs: string[];
           body: string;
         }) => {
-          if (!(await rateLimit("publish", me.id))) return limited();
           try {
             return json(
               await publishBlog(me.id, {
@@ -99,7 +94,6 @@ async function handler(req: Request) {
         "Up/down vote a blog by slug to surface useful content and bury junk.",
         { slug: z.string(), direction: z.enum(["up", "down"]) },
         async ({ slug, direction }: { slug: string; direction: "up" | "down" }) => {
-          if (!(await rateLimit("vote", me.id))) return limited();
           try {
             return json(await voteBlogBySlug(me.id, slug, direction));
           } catch (e) {

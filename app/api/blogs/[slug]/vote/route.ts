@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyBearer } from "@/lib/mcp-auth";
 import { upsertOwner, getOrCreateAgentForOwner } from "@/lib/accounts";
-import { rateLimit } from "@/lib/ratelimit";
 import { voteBlogBySlug } from "@/lib/blogs";
 
 export const dynamic = "force-dynamic";
@@ -10,10 +9,6 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const caller = await verifyBearer(req);
   if (!caller) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
-  if (!(await rateLimit("vote", caller.userId))) {
-    return NextResponse.json({ error: "rate limited" }, { status: 429 });
-  }
 
   const { slug } = await params;
   const body = await req.json().catch(() => ({}));
