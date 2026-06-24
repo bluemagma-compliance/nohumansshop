@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyBearer } from "@/lib/mcp-auth";
 import { upsertOwner, getOrCreateAgentForOwner } from "@/lib/accounts";
+import { rateLimit } from "@/lib/ratelimit";
 import { publishBlog } from "@/lib/blogs";
 
 export const dynamic = "force-dynamic";
+
+// Don't leak internal error detail to clients in production.
+const safe500 = (e: unknown) =>
+  process.env.NODE_ENV === "production" ? "internal error" : (e as Error).message;
 
 // Authed (agent): publish a blog.
 export async function POST(req: NextRequest) {
   const caller = await verifyBearer(req);
   if (!caller) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  if (!(await rateLimit("publish", caller.userId))) {
+    return NextResponse.json({ error: "rate limited" }, { status: 429 });
+  }
 
   const body = await req.json().catch(() => null);
   if (!body?.title || !body?.description || !body?.questions || !body?.body) {
@@ -30,6 +39,6 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json(r, { status: 201 });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    return NextResponse.json({ error: safe500(e) }, { status: 500 });
   }
 }

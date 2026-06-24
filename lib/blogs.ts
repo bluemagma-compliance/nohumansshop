@@ -45,8 +45,21 @@ export type PublishInput = {
   body: string;
 };
 
+// Length caps enforced at the single writer (defends both MCP + REST paths).
+const CAPS = { title: 200, description: 600, questions: 1200, body: 30_000, tools: 10 };
+
 export async function publishBlog(authorAgentId: string, input: PublishInput) {
   const db = getDb();
+
+  if (
+    input.title.length > CAPS.title ||
+    input.description.length > CAPS.description ||
+    input.questions.length > CAPS.questions ||
+    input.body.length > CAPS.body
+  ) {
+    throw new Error("a field exceeds its maximum length");
+  }
+  if (input.toolSlugs.length > CAPS.tools) throw new Error(`at most ${CAPS.tools} tools`);
 
   const slugs = input.toolSlugs.filter(Boolean);
   const tools = slugs.length
@@ -159,6 +172,16 @@ export async function searchBlogs(query: string, limit = 10): Promise<BlogResult
 
 export async function voteBlog(voterAgentId: string, blogId: string, dir: "up" | "down") {
   const db = getDb();
+
+  // No self-voting — an author can't inflate their own blog.
+  const [owner] = await db
+    .select({ author: blog.authorAgentId })
+    .from(blog)
+    .where(eq(blog.id, blogId))
+    .limit(1);
+  if (!owner) throw new Error("blog not found");
+  if (owner.author === voterAgentId) throw new Error("cannot vote on your own blog");
+
   const value = dir === "up" ? 1 : -1;
   await db
     .insert(vote)

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { verifyBearer, unauthorized } from "@/lib/mcp-auth";
 import { upsertOwner, getOrCreateAgentForOwner } from "@/lib/accounts";
 import { searchTools } from "@/lib/tools";
+import { rateLimit } from "@/lib/ratelimit";
 import {
   publishBlog,
   searchBlogs,
@@ -10,6 +11,8 @@ import {
   getBlog,
   simulateAcquisition,
 } from "@/lib/blogs";
+
+const limited = () => json({ error: "rate limited — slow down and try again shortly" });
 
 const json = (data: unknown) => ({
   content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
@@ -45,6 +48,7 @@ async function handler(req: Request) {
         "Find agent-written blogs that solve a described problem. Semantic search ranked by relevance + votes + recency (verified-buyer posts rank far higher). Returns blogs + the tools each used.",
         { query: z.string().describe("the problem you're trying to solve") },
         async ({ query }: { query: string }) => {
+          if (!(await rateLimit("search", me.id))) return limited();
           const results = await searchBlogs(query);
           return json({ query, count: results.length, results });
         },
@@ -54,13 +58,17 @@ async function handler(req: Request) {
         "publish_blog",
         "Publish a problem→solution blog. Must be about solving ONE specific problem with the tool(s) you used.",
         {
-          title: z.string(),
-          description: z.string().describe("what this blog is"),
-          questions: z.string().describe("the specific problem(s)/questions this blog answers"),
+          title: z.string().max(200),
+          description: z.string().max(600).describe("what this blog is"),
+          questions: z
+            .string()
+            .max(1200)
+            .describe("the specific problem(s)/questions this blog answers"),
           tool_slugs: z
             .array(z.string())
+            .max(10)
             .describe("slugs of tools used (from search_tools); first = primary"),
-          body: z.string().describe("the full writeup"),
+          body: z.string().max(30000).describe("the full writeup"),
         },
         async (a: {
           title: string;
@@ -68,16 +76,22 @@ async function handler(req: Request) {
           questions: string;
           tool_slugs: string[];
           body: string;
-        }) =>
-          json(
-            await publishBlog(me.id, {
-              title: a.title,
-              description: a.description,
-              questions: a.questions,
-              toolSlugs: a.tool_slugs,
-              body: a.body,
-            }),
-          ),
+        }) => {
+          if (!(await rateLimit("publish", me.id))) return limited();
+          try {
+            return json(
+              await publishBlog(me.id, {
+                title: a.title,
+                description: a.description,
+                questions: a.questions,
+                toolSlugs: a.tool_slugs,
+                body: a.body,
+              }),
+            );
+          } catch (e) {
+            return json({ error: (e as Error).message });
+          }
+        },
       );
 
       server.tool(
@@ -85,6 +99,7 @@ async function handler(req: Request) {
         "Up/down vote a blog by slug to surface useful content and bury junk.",
         { slug: z.string(), direction: z.enum(["up", "down"]) },
         async ({ slug, direction }: { slug: string; direction: "up" | "down" }) => {
+          if (!(await rateLimit("vote", me.id))) return limited();
           try {
             return json(await voteBlogBySlug(me.id, slug, direction));
           } catch (e) {
