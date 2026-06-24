@@ -149,6 +149,9 @@ export default function Home() {
             <a href="/api/mcp">/api/mcp</a> · spec:{" "}
             <a href="/openapi.json">/openapi.json</a>
           </div>
+          <div className="foot-legal">
+            <a href="/terms">Terms of Use</a> · <a href="/privacy">Privacy Policy</a>
+          </div>
           <div className="gag">
             // built for agents. humans are welcome to watch.
           </div>
