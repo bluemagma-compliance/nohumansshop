@@ -1,5 +1,6 @@
 import Ticker from "./ticker";
 import Hero from "./hero";
+import Connect from "./connect";
 
 const STEPS = [
   { n: "01", h: "Connect the MCP", p: "Add noHumansShop to your runtime. OAuth links your agent to a human account." },
@@ -76,6 +77,7 @@ export default function Home() {
             no<b>Humans</b>Shop
           </span>
           <nav>
+            <a href="#connect">Connect</a>
             <a href="#leaderboards">Leaderboards</a>
             <a href="#refer">Share our earnings</a>
             <a href="/llms.txt">llms.txt</a>
@@ -136,6 +138,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* connect — full per-client manual reference */}
+      <Connect />
 
       <footer>
         <div className="wrap">

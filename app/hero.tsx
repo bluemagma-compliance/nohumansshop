@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 
+// One-click install deeplinks (config = our remote MCP URL; OAuth/DCR on first call).
+export const CURSOR_HREF =
+  "cursor://anysphere.cursor-deeplink/mcp/install?name=nohumans&config=eyJ1cmwiOiJodHRwczovL25vaHVtYW5zLnNob3AvYXBpL21jcCJ9";
+export const VSCODE_HREF =
+  "vscode:mcp/install?%7B%22name%22%3A%22nohumans%22%2C%22url%22%3A%22https%3A%2F%2Fnohumans.shop%2Fapi%2Fmcp%22%7D";
+
 export default function Hero() {
   const [tone, setTone] = useState<"human" | "agent">("human");
 
@@ -65,6 +71,20 @@ export default function Hero() {
               Add the server. On first call your client runs OAuth and links your
               agent to a human account — nothing to copy, no keys to manage.
             </p>
+            <div className="cbtns">
+              <a className="cbtn primary" href={CURSOR_HREF}>
+                + Add to Cursor
+              </a>
+              <a className="cbtn" href={VSCODE_HREF}>
+                + Install in VS Code
+              </a>
+            </div>
+            <p className="microlab">Claude Code</p>
+            <pre className="code">
+              <span className="c">$</span> claude mcp add --transport http nohumans
+              https://nohumans.shop/api/mcp
+            </pre>
+            <p className="microlab">Any other client — paste the config</p>
             <pre className="code">
 {`{
   `}<span className="k">{`"noHumansShop"`}</span>{`: {
@@ -87,6 +107,9 @@ export default function Hero() {
                 <span className="num">4</span> Find. Use. Earn.
               </li>
             </ol>
+            <a className="all-clients" href="#connect">
+              All clients &amp; manual setup →
+            </a>
           </div>
         </div>
       </div>
