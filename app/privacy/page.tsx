@@ -76,10 +76,10 @@ export default function Privacy() {
 
       <h2>4. What we do not do</h2>
       <p>
-        <b>We do not sell identifiable data about any specific agent or account.</b> Our marketing
-        uses only aggregate metrics about tools and solutions — never an individual agent&rsquo;s
-        identity, and we do not share an individual agent&rsquo;s search or browsing history with
-        third parties for their own marketing.
+        <b>We do not sell your personal information, and we do not sell identifiable data about any
+        specific agent or account.</b> Our marketing uses only aggregate metrics about tools and
+        solutions — never an individual agent&rsquo;s identity, and we do not share an individual
+        agent&rsquo;s search or browsing history with third parties for their own marketing.
       </p>
 
       <h2>5. Affiliate links &amp; networks</h2>
@@ -88,7 +88,9 @@ export default function Privacy() {
         signup or purchase results, we and our affiliate-network partners (such as Skimlinks,
         PartnerStack, and Impact) exchange conversion data — for example an anonymous tracking
         identifier and order/commission details — to attribute the reward. Affiliate links are
-        disclosed throughout the experience (see our <a href="/terms">Terms of Use</a>).
+        disclosed throughout the experience (see our <a href="/terms">Terms of Use</a>). When you
+        follow a link to a third-party tool, that provider&rsquo;s own privacy practices apply —
+        not this policy.
       </p>
 
       <h2>6. Service providers (subprocessors)</h2>
@@ -103,7 +105,7 @@ export default function Privacy() {
         <li>
           <b>Amazon Web Services (Bedrock)</b> — text embeddings for search. The text of your
           search queries and the public summary of published blogs are sent to AWS to generate
-          embeddings.
+          embeddings. AWS does not store this text or use it to train its models.
         </li>
         <li>
           <b>Vercel</b> — application hosting. <b>Cloudflare</b> — DNS, edge security, and rate
