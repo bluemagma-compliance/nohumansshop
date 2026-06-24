@@ -5,11 +5,14 @@ import {
   uuid,
   jsonb,
   integer,
+  smallint,
   boolean,
   numeric,
+  vector,
   timestamp,
   uniqueIndex,
   index,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 // Owner = the human account. In Milestone A `user_id` is a mocked subject string;
@@ -106,4 +109,94 @@ export const affiliateLink = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("affiliate_link_tool_idx").on(t.toolId)],
+);
+
+// Agent-authored problem→solution writeup. search_summary (questions+description,
+// ≤1200) is the only text we embed for semantic search.
+export const blog = pgTable(
+  "blog",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    authorAgentId: uuid("author_agent_id")
+      .notNull()
+      .references(() => agent.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    slug: text("slug").notNull(),
+    description: text("description").notNull(),
+    questions: text("questions").notNull(), // the specific problem(s) it answers
+    body: text("body").notNull(),
+    searchSummary: text("search_summary").notNull(), // ≤1200 chars, embedded
+    embedding: vector("embedding", { dimensions: 1536 }), // OpenAI text-embedding-3-small
+    confirmedBuyer: boolean("confirmed_buyer").notNull().default(false),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    status: text("status").notNull().default("published"), // draft|published|removed
+    upvotes: integer("upvotes").notNull().default(0),
+    downvotes: integer("downvotes").notNull().default(0),
+    score: integer("score").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("blog_slug_uq").on(t.slug),
+    index("blog_status_pub_idx").on(t.status, t.publishedAt),
+  ],
+);
+
+// Tools used/referenced in a blog (M:N). First/primary tool drives confirmed_buyer.
+export const blogTool = pgTable(
+  "blog_tool",
+  {
+    blogId: uuid("blog_id")
+      .notNull()
+      .references(() => blog.id, { onDelete: "cascade" }),
+    toolId: uuid("tool_id")
+      .notNull()
+      .references(() => tool.id, { onDelete: "cascade" }),
+    isPrimary: boolean("is_primary").notNull().default(false),
+  },
+  (t) => [
+    primaryKey({ columns: [t.blogId, t.toolId] }),
+    index("blog_tool_tool_idx").on(t.toolId),
+  ],
+);
+
+// Up/down votes on blogs (one per agent). Feeds the rating signal in search.
+export const vote = pgTable(
+  "vote",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    blogId: uuid("blog_id")
+      .notNull()
+      .references(() => blog.id, { onDelete: "cascade" }),
+    voterAgentId: uuid("voter_agent_id")
+      .notNull()
+      .references(() => agent.id, { onDelete: "cascade" }),
+    value: smallint("value").notNull(), // +1 | -1
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("vote_blog_voter_uq").on(t.blogId, t.voterAgentId)],
+);
+
+// An agent acquired/used a tool through us → the verified-buyer record + usage count.
+// Data is currently FAKED via the dev `simulate_acquisition` tool; the real broker
+// flow (Milestone D) will populate it.
+export const toolAcquisition = pgTable(
+  "tool_acquisition",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    agentId: uuid("agent_id")
+      .notNull()
+      .references(() => agent.id, { onDelete: "cascade" }),
+    toolId: uuid("tool_id")
+      .notNull()
+      .references(() => tool.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("initiated"), // initiated|verified_signup|verified_paid
+    viaBlogId: uuid("via_blog_id").references(() => blog.id, { onDelete: "set null" }),
+    acquiredAt: timestamp("acquired_at", { withTimezone: true }).notNull().defaultNow(),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("tool_acq_agent_tool_uq").on(t.agentId, t.toolId),
+    index("tool_acq_tool_idx").on(t.toolId),
+  ],
 );
