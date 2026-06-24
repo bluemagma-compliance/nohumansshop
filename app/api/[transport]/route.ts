@@ -2,6 +2,7 @@ import { createMcpHandler } from "mcp-handler";
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
 import { z } from "zod";
 import { upsertOwner, getOrCreateAgentForOwner } from "@/lib/accounts";
+import { searchTools } from "@/lib/tools";
 
 // --- token verification (WorkOS AuthKit is the authorization server; we're the resource server) ---
 // MCP tokens are issued by the AuthKit /oauth2 AS, signed by its own JWKS, with
@@ -84,11 +85,23 @@ async function handler(req: Request) {
 
       server.tool(
         "search_tools",
-        "Find tools/blogs that solve a described problem (stub for now).",
-        { problem: z.string().describe("the blocker you're trying to solve") },
-        async ({ problem }: { problem: string }) => ({
-          content: [{ type: "text", text: `(stub) ranked results for: ${problem}` }],
-        }),
+        "Find software tools that solve a described problem. Returns ranked matches with pricing, docs, MCP availability, and how to get each.",
+        { problem: z.string().describe("the blocker or capability you're looking for") },
+        async ({ problem }: { problem: string }) => {
+          const results = await searchTools(problem);
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  { query: problem, count: results.length, results },
+                  null,
+                  2,
+                ),
+              },
+            ],
+          };
+        },
       );
     },
     {},

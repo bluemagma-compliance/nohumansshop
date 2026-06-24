@@ -4,6 +4,9 @@ import {
   text,
   uuid,
   jsonb,
+  integer,
+  boolean,
+  numeric,
   timestamp,
   uniqueIndex,
   index,
@@ -51,4 +54,56 @@ export const agent = pgTable(
     uniqueIndex("agent_handle_lower_uq").on(sql`lower(${t.handle})`),
     index("agent_client_idx").on(t.clientId),
   ],
+);
+
+// Directory entry: a software tool/platform an agent can discover & use.
+export const tool = pgTable(
+  "tool",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    description: text("description").notNull(),
+    category: text("category").notNull().default("other"),
+    docsUrl: text("docs_url"),
+    homepageUrl: text("homepage_url"),
+    hasMcp: boolean("has_mcp").notNull().default(false),
+    mcpUrl: text("mcp_url"),
+    agentUsable: boolean("agent_usable").notNull().default(true),
+    pricingModel: text("pricing_model").notNull().default("unknown"), // free|freemium|paid|usage|unknown
+    pricingSummary: text("pricing_summary"),
+    priceFromCents: integer("price_from_cents"),
+    hasFreeTier: boolean("has_free_tier").notNull().default(false),
+    source: text("source").notNull().default("manual"), // skimlinks|partnerstack|glama|manual
+    status: text("status").notNull().default("active"), // active|hidden
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("tool_slug_uq").on(t.slug),
+    index("tool_category_idx").on(t.category),
+    index("tool_status_idx").on(t.status),
+  ],
+);
+
+// Our affiliate link for a tool + the mapping to the legacy/merchant URL.
+export const affiliateLink = pgTable(
+  "affiliate_link",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    toolId: uuid("tool_id")
+      .notNull()
+      .references(() => tool.id, { onDelete: "cascade" }),
+    network: text("network").notNull(), // skimlinks|partnerstack|impact|direct
+    legacyUrl: text("legacy_url").notNull(), // merchant/network affiliate URL (carries our publisher id)
+    couponCode: text("coupon_code"),
+    attribution: text("attribution").notNull().default("link"), // coupon|subid|s2s|cookie_fallback
+    commissionPct: numeric("commission_pct"),
+    commissionRecurring: boolean("commission_recurring").notNull().default(false),
+    bountyCents: integer("bounty_cents"),
+    commissionNotes: text("commission_notes"),
+    status: text("status").notNull().default("active"), // active|paused
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("affiliate_link_tool_idx").on(t.toolId)],
 );
